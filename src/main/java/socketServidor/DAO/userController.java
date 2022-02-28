@@ -33,7 +33,7 @@ public class userController {
 	}
 	
 	
-	public user showUser(int id) throws Exception {
+	public user showUserById(int id) throws Exception {
 		user result = null;
 		
 		EntityManager em = createEM();
@@ -50,8 +50,45 @@ public class userController {
 		return result;
 	}
 	
-	public void updateUser(User u) throws Exception {
+	public user showUserByName(String name) throws Exception {
+		user result = null;
 		
+		EntityManager em = createEM();
+		
+		try  {
+			em.getTransaction().begin();
+			result = em.find(user.class, name);
+			em.getTransaction().commit();
+			em.getTransaction().commit();
+		} catch (Exception e) {
+			throw new Exception("Hubo algún error", e);
+		}
+		
+		return result;
+	}
+	
+	public void saveUser(user u) throws Exception {
+		EntityManager em = createEM();
+		
+		try {
+			em.getTransaction().begin();
+			em.persist(u);
+			em.getTransaction().commit();
+		} catch (Exception e) {
+			throw new Exception("Hubo algún error", e);
+		}
+	}
+	
+	public void deleteUser(user u) throws Exception {
+		EntityManager em = createEM();
+		
+		try {
+			em.getTransaction().begin();
+			em.remove(u);
+			em.getTransaction().commit();
+		} catch (Exception e) {
+			throw new Exception("Hubo algún error", e);
+		}
 	}
 	
 }
