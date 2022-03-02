@@ -5,29 +5,20 @@ public class user {
 	protected String name;
 	protected String password;
 	protected int wallet;
-	protected account miaccount;
 	
 
-	public user(int id, String name, String password, int wallet, account miaccount) {
+	public user(int id, String name, String password, int wallet) {
 		super();
 		this.id = id;
 		this.name = name;
 		this.password = password;
 		this.wallet = wallet;
-		this.miaccount = miaccount;
 	}
 
 	public user() {
 		super();
 	}
 
-	public account getMiaccount() {
-		return miaccount;
-	}
-
-	public void setMiaccount(account miaccount) {
-		this.miaccount = miaccount;
-	}
 
 	public int getId() {
 		return id;

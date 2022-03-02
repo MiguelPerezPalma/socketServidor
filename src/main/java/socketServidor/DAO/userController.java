@@ -1,93 +1,146 @@
 package socketServidor.DAO;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 
+import socketServidor.Coneection.Conexion;
 import socketServidor.models.user;
-import socketServidor.utils.PersistenceUnit;
+
 
 public class userController {
 
-	public static EntityManager createEM() {
-		return PersistenceUnit.getEM();
-	}
+	private static final String GETALL = "SELECT * FROM user";
+	private static final String GETBYID = "SELECT * FROM user WHERE id=?";
+	private static final String DELETE ="DELETE FROM user WHERE id=?";
+	private final static String INSERT = "INSERT INTO user (id,name,password,wallet)" + "VALUES (?,?,?,?)";
+	public static List<user> getAllUsers() {
+		List<user> users = new ArrayList<user>();
 
-	public List<user> showAllUsers() throws Exception {
-		List<user> result = new ArrayList<user>();
-		EntityManager em = createEM();
+		Connection con = Conexion.getConexion();
+		if (con != null) {
+			PreparedStatement ps = null;
+			ResultSet rs = null;
+			try {
+				ps = con.prepareStatement(GETALL);
+				rs = ps.executeQuery();
+				while (rs.next()) {
+					user miuser = new user();
+					miuser.setId(rs.getInt("id"));
+					miuser.setName(rs.getString("name"));
+					miuser.setPassword(rs.getString("password"));
+					miuser.setWallet(rs.getInt("wallet"));
+					users.add(miuser);
+				}
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} finally {
+				try {
+					ps.close();
+					rs.close();
+				} catch (SQLException e) {
+					// TODO: handle exception
+				}
+			}
+		}
+		return users;
+	}
+	public static user getUserById(int id) {
+		user resultado=new user();
+		
+		Connection con = Conexion.getConexion();
+		if (con != null) {
+			PreparedStatement ps=null;
+			ResultSet rs=null;
+			try {
+				ps = con.prepareStatement(GETBYID);
+				ps.setInt(1,id);
+				rs=ps.executeQuery();
+				while (rs.next()) {
+					
+					resultado=new user(rs.getInt("id"),
+							rs.getString("name"),
+							rs.getString("password"),
+							rs.getInt("wallet"));
+				
+				}
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} finally {
+				try {
+					ps.close();
+					rs.close();
+				}catch (SQLException e) {
+					// TODO: handle exception
+				}
+			}
+		}
+		return resultado;
+	}
+	
+	
+	
+	public static void deleteAccount(user u) {
+		int rs=0;
+		Connection con = Conexion.getConexion();
+		
+		if (con != null) {
+			try {
+				
+				PreparedStatement q=con.prepareStatement(DELETE);
+				q.setInt(1,u.getId());
+				rs =q.executeUpdate();
+				
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public static void createAccount(user u) {
+		int result = -1;
+		ResultSet rs = null;
+		PreparedStatement ps = null;
+		Connection con = Conexion.getConexion();
 
-		try {
-			em.getTransaction().begin();
-			TypedQuery<user> q = em.createNamedQuery("getAllUsers", user.class);
-			result = q.getResultList();
-			em.getTransaction().commit();
+		if (con != null) {
+			try {
+				ps = con.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
+				ps.setInt(1, u.getId());
+				ps.setString(2, u.getName());
+				ps.setString(3, u.getPassword());
+				ps.setInt(4, u.getWallet());
+				ps.executeUpdate();
 
-		} catch (Exception e) {
-			throw new Exception("Hubo algún error", e);
-		}
+				rs = ps.getGeneratedKeys();
+				if (rs.next()) {
+					u.setId(rs.getInt(1));
+				}
 
-		return result;
-	}
-	
-	
-	public user showUserById(int id) throws Exception {
-		user result = null;
-		
-		EntityManager em = createEM();
-		
-		try  {
-			em.getTransaction().begin();
-			result = em.find(user.class, id);
-			em.getTransaction().commit();
-			em.getTransaction().commit();
-		} catch (Exception e) {
-			throw new Exception("Hubo algún error", e);
-		}
-		
-		return result;
-	}
-	
-	public user showUserByName(String name) throws Exception {
-		user result = null;
-		
-		EntityManager em = createEM();
-		
-		try  {
-			em.getTransaction().begin();
-			result = em.find(user.class, name);
-			em.getTransaction().commit();
-			em.getTransaction().commit();
-		} catch (Exception e) {
-			throw new Exception("Hubo algún error", e);
-		}
-		
-		return result;
-	}
-	
-	public void saveUser(user u) throws Exception {
-		EntityManager em = createEM();
-		
-		try {
-			em.getTransaction().begin();
-			em.persist(u);
-			em.getTransaction().commit();
-		} catch (Exception e) {
-			throw new Exception("Hubo algún error", e);
-		}
-	}
-	
-	public void deleteUser(user u) throws Exception {
-		EntityManager em = createEM();
-		
-		try {
-			em.getTransaction().begin();
-			em.remove(u);
-			em.getTransaction().commit();
-		} catch (Exception e) {
-			throw new Exception("Hubo algún error", e);
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			finally {
+				try {
+					ps.close();
+				} catch (SQLException e) {
+					// TODO: handle exception
+					e.printStackTrace();
+				}
+			}
+
 		}
 	}
 	

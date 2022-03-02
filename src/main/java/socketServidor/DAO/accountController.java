@@ -1,8 +1,14 @@
 package socketServidor.DAO;
 
+import socketServidor.Coneection.Conexion;
 import socketServidor.models.account;
-import socketServidor.utils.PersistenceUnit;
+import socketServidor.models.user;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,43 +18,129 @@ import javax.persistence.Persistence;
 import javax.persistence.TypedQuery;
 
 public class accountController {
-	public static EntityManager createEM() {
-		return PersistenceUnit.getEM();
-	}
-	public List<account> getAllAccounts() throws Exception {
-		List<account> result = new ArrayList<account>();
-		EntityManager em = createEM();
-		try {
-			em.getTransaction().begin();
-			TypedQuery<account> q = em.createNamedQuery("getAllAccounts", account.class);
-			result = q.getResultList();
-			em.getTransaction().commit();
-		} catch (Exception e) {
-			throw new Exception("No se encontraron Cuentas", e);
+	private static final String GETALL = "SELECT * FROM account";
+	private static final String GETBYID = "SELECT * FROM account WHERE id=?";
+	private static final String DELETE ="DELETE FROM account WHERE id=?";
+	private final static String INSERT = "INSERT INTO account (id,money,user_id)" + "VALUES (?,?,?)";
+	public static List<account> getAllAccounts() {
+		List<account> accounts = new ArrayList<account>();
+
+		Connection con = Conexion.getConexion();
+		if (con != null) {
+			PreparedStatement ps = null;
+			ResultSet rs = null;
+			try {
+				ps = con.prepareStatement(GETALL);
+				rs = ps.executeQuery();
+				while (rs.next()) {
+					account miaccount = new account();
+					miaccount.setId(rs.getInt("id"));
+					miaccount.setMoney(rs.getInt("money"));
+					miaccount.setMiuser(userController.getUserById(rs.getInt("user_id")));
+					accounts.add(miaccount);
+				}
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} finally {
+				try {
+					ps.close();
+					rs.close();
+				} catch (SQLException e) {
+					// TODO: handle exception
+				}
+			}
 		}
-		return result;
+		return accounts;
 	}
 	
-	public void saveAccount(account ac) throws Exception {
-		EntityManager em = createEM();
+	
+	public account getAccoutByID(int id) {
+		account resultado=new account();
 		
-		try {
-			em.getTransaction().begin();
-			em.persist(ac);
-			em.getTransaction().commit();
-		} catch (Exception e) {
-			throw new Exception("No se pudo guardar la nueva cuenta", e);
+		Connection con = Conexion.getConexion();
+		if (con != null) {
+			PreparedStatement ps=null;
+			ResultSet rs=null;
+			try {
+				ps = con.prepareStatement(GETBYID);
+				ps.setInt(1,id);
+				rs=ps.executeQuery();
+				while (rs.next()) {
+					userController x=new userController();
+					user xs=x.getUserById(rs.getInt("Id_Genero"));
+					
+					resultado=new account(rs.getInt("Id"),
+							rs.getInt("money"),
+							xs);
+				
+				}
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} finally {
+				try {
+					ps.close();
+					rs.close();
+				}catch (SQLException e) {
+					// TODO: handle exception
+				}
+			}
+		}
+		return resultado;
+	}
+	
+	public static void deleteAccount(account a) {
+		int rs=0;
+		Connection con = Conexion.getConexion();
+		
+		if (con != null) {
+			try {
+				
+				PreparedStatement q=con.prepareStatement(DELETE);
+				q.setInt(1,a.getId());
+				rs =q.executeUpdate();
+				
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
-	public void deleteUser(account ac) throws Exception {
-		EntityManager em = createEM();
-		
-		try {
-			em.getTransaction().begin();
-			em.remove(ac);
-			em.getTransaction().commit();
-		} catch (Exception e) {
-			throw new Exception("La cuenta no existe o No se pudo eliminar", e);
+	public static void createAccount(account a) {
+		int result = -1;
+		ResultSet rs = null;
+		PreparedStatement ps = null;
+		Connection con = Conexion.getConexion();
+
+		if (con != null) {
+			try {
+				ps = con.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
+				ps.setInt(1, a.getId());
+				ps.setInt(2, a.getMoney());
+				ps.setDouble(3, a.getMiuser().getId());
+
+				ps.executeUpdate();
+
+				rs = ps.getGeneratedKeys();
+				if (rs.next()) {
+					a.setId(rs.getInt(1));
+				}
+
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			finally {
+				try {
+					ps.close();
+				} catch (SQLException e) {
+					// TODO: handle exception
+					e.printStackTrace();
+				}
+			}
+
 		}
 	}
 }

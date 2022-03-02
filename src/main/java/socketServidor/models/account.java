@@ -5,32 +5,26 @@ import java.util.List;
 public class account {
 	protected int id;
 	protected int money;
-	protected List<user> users;
-	
-	
-	public account(int id, int money, List<user> users) {
+	protected user miuser;
+	public account(int id, int money, user miuser) {
 		super();
 		this.id = id;
 		this.money = money;
-		this.users = users;
+		this.miuser = miuser;
 	}
-
+	
 	public account() {
 		super();
 	}
 
-	public List<user> getUsers() {
-		return users;
+	public account(int money, user miuser) {
+		super();
+		this.money = money;
+		this.miuser = miuser;
 	}
-
-	public void setUsers(List<user> users) {
-		this.users = users;
-	}
-
 	public int getId() {
 		return id;
 	}
-
 	public void setId(int id) {
 		this.id = id;
 	}
@@ -40,5 +34,18 @@ public class account {
 	public void setMoney(int money) {
 		this.money = money;
 	}
+	public user getMiuser() {
+		return miuser;
+	}
+	public void setMiuser(user miuser) {
+		this.miuser = miuser;
+	}
+	@Override
+	public String toString() {
+		return "account [id=" + id + ", money=" + money + ", miuser=" + miuser + "]";
+	}
+	
+	
+	
 	
 }
