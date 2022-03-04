@@ -16,6 +16,12 @@ public class user {
 		this.wallet = wallet;
 		this.isOperator = isOperator;
 	}
+	
+	public user(int id, int wallet) {
+		super();
+		this.id = id;
+		this.wallet = wallet;
+	}
 
 	public user() {
 		super();

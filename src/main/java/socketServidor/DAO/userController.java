@@ -20,7 +20,8 @@ public class userController {
 	private static final String GETALL = "SELECT * FROM user";
 	private static final String GETBYID = "SELECT * FROM user WHERE id=?";
 	private static final String DELETE ="DELETE FROM user WHERE id=?";
-	private final static String INSERT = "INSERT INTO user (id,name,password,wallet)" + "VALUES (?,?,?,?)";
+	private final static String INSERT = "INSERT INTO user (id,name,password,wallet,isoperator)" + "VALUES (?,?,?,?,?)";
+	private final static String GETWALLETBYID = "SELECT wallet FROM user WHERE id=?";
 	public static List<user> getAllUsers() {
 		List<user> users = new ArrayList<user>();
 
@@ -37,6 +38,7 @@ public class userController {
 					miuser.setName(rs.getString("name"));
 					miuser.setPassword(rs.getString("password"));
 					miuser.setWallet(rs.getInt("wallet"));
+					miuser.setOperator(rs.getBoolean("isoperator"));
 					users.add(miuser);
 				}
 			} catch (SQLException e) {
@@ -144,6 +146,38 @@ public class userController {
 			}
 
 		}
+	}
+	
+	public static user getWalletById(int id) {
+		user resultado=new user();
+		
+		Connection con = Conexion.getConexion();
+		if (con != null) {
+			PreparedStatement ps=null;
+			ResultSet rs=null;
+			try {
+				ps = con.prepareStatement(GETWALLETBYID);
+				ps.setInt(1,id);
+				rs=ps.executeQuery();
+				while (rs.next()) {
+					
+					resultado=new user(rs.getInt(id),
+							rs.getInt("wallet"));
+				
+				}
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} finally {
+				try {
+					ps.close();
+					rs.close();
+				}catch (SQLException e) {
+					// TODO: handle exception
+				}
+			}
+		}
+		return resultado;
 	}
 	
 }

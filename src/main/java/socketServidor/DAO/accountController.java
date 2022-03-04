@@ -22,6 +22,7 @@ public class accountController {
 	private static final String GETBYID = "SELECT * FROM account WHERE id=?";
 	private static final String DELETE ="DELETE FROM account WHERE id=?";
 	private final static String INSERT = "INSERT INTO account (id,money,user_id)" + "VALUES (?,?,?)";
+	private final static String GETMONEYBYID = "SELECT money FROM account WHERE id=?";
 	public static List<account> getAllAccounts() {
 		List<account> accounts = new ArrayList<account>();
 
@@ -107,6 +108,7 @@ public class accountController {
 			}
 		}
 	}
+	
 	public static void createAccount(account a) {
 		int result = -1;
 		ResultSet rs = null;
@@ -141,6 +143,92 @@ public class accountController {
 				}
 			}
 
+		}
+	}
+	
+	public static void insertAccount(account a) {
+		ResultSet rs = null;
+		PreparedStatement ps = null;
+		Connection con = Conexion.getConexion();
+
+		if (con != null) {
+			try {
+				ps = con.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
+				ps.setInt(1, a.getId());
+				ps.setInt(2, a.getMoney());
+				ps.setDouble(3, a.getMiuser().getId());
+
+				ps.executeUpdate();
+
+				rs = ps.getGeneratedKeys();
+				if (rs.next()) {
+					a.setId(rs.getInt(1));
+				}
+
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			finally {
+				try {
+					ps.close();
+				} catch (SQLException e) {
+					// TODO: handle exception
+					e.printStackTrace();
+				}
+			}
+
+		}
+	}
+	
+	public static void addMoneyInAccount(int money, account a) {
+		ResultSet rs = null;
+		PreparedStatement ps = null;
+		Connection con = Conexion.getConexion();
+		
+		if (con != null) {
+			try {
+				ps = con.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
+				ps.setInt(1, a.getId());
+				ps.setInt(2, a.getMoney() + money);
+				ps.setDouble(3, a.getMiuser().getId());
+
+				ps.executeUpdate();
+
+				rs = ps.getGeneratedKeys();
+				if (rs.next()) {
+					a.setId(rs.getInt(1));
+				}
+				
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public static void subtractMoneyInAccount(int money, account a) {
+		ResultSet rs = null;
+		PreparedStatement ps = null;
+		Connection con = Conexion.getConexion();
+		
+		if (con != null) {
+			try {
+				ps = con.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
+				ps.setInt(1, a.getId());
+				ps.setInt(2, a.getMoney() - money);
+				ps.setDouble(3, a.getMiuser().getId());
+
+				ps.executeUpdate();
+
+				rs = ps.getGeneratedKeys();
+				if (rs.next()) {
+					a.setId(rs.getInt(1));
+				}
+				
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 }
