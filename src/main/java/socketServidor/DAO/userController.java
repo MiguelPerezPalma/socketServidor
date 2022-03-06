@@ -20,8 +20,7 @@ public class userController {
 	private static final String GETALL = "SELECT * FROM user";
 	private static final String GETBYID = "SELECT * FROM user WHERE id=?";
 	private static final String DELETE ="DELETE FROM user WHERE id=?";
-	private final static String INSERT = "INSERT INTO user (id,name,password,wallet,isoperator)" + "VALUES (?,?,?,?,?)";
-	private final static String GETWALLETBYID = "SELECT wallet FROM user WHERE id=?";
+	private final static String INSERT = "INSERT INTO user (id,name,password,wallet)" + "VALUES (?,?,?,?)";
 	public static List<user> getAllUsers() {
 		List<user> users = new ArrayList<user>();
 
@@ -38,7 +37,6 @@ public class userController {
 					miuser.setName(rs.getString("name"));
 					miuser.setPassword(rs.getString("password"));
 					miuser.setWallet(rs.getInt("wallet"));
-					miuser.setOperator(rs.getBoolean("isoperator"));
 					users.add(miuser);
 				}
 			} catch (SQLException e) {
@@ -71,8 +69,7 @@ public class userController {
 					resultado=new user(rs.getInt("id"),
 							rs.getString("name"),
 							rs.getString("password"),
-							rs.getInt("wallet"),
-							rs.getBoolean("isOperator"));
+							rs.getInt("wallet"));
 				
 				}
 			} catch (SQLException e) {
@@ -123,7 +120,6 @@ public class userController {
 				ps.setString(2, u.getName());
 				ps.setString(3, u.getPassword());
 				ps.setInt(4, u.getWallet());
-				ps.setBoolean(5, u.isOperator());
 				ps.executeUpdate();
 
 				rs = ps.getGeneratedKeys();
@@ -146,38 +142,6 @@ public class userController {
 			}
 
 		}
-	}
-	
-	public static user getWalletById(int id) {
-		user resultado=new user();
-		
-		Connection con = Conexion.getConexion();
-		if (con != null) {
-			PreparedStatement ps=null;
-			ResultSet rs=null;
-			try {
-				ps = con.prepareStatement(GETWALLETBYID);
-				ps.setInt(1,id);
-				rs=ps.executeQuery();
-				while (rs.next()) {
-					
-					resultado=new user(rs.getInt(id),
-							rs.getInt("wallet"));
-				
-				}
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} finally {
-				try {
-					ps.close();
-					rs.close();
-				}catch (SQLException e) {
-					// TODO: handle exception
-				}
-			}
-		}
-		return resultado;
 	}
 	
 }

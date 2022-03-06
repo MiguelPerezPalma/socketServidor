@@ -22,7 +22,7 @@ public class accountController {
 	private static final String GETBYID = "SELECT * FROM account WHERE id=?";
 	private static final String DELETE ="DELETE FROM account WHERE id=?";
 	private final static String INSERT = "INSERT INTO account (id,money,user_id)" + "VALUES (?,?,?)";
-	private final static String GETMONEYBYID = "SELECT money FROM account WHERE id=?";
+	private final static String UPDATEMONEY = "UPDATE cuenta SET money=? WHERE id=?";
 	public static List<account> getAllAccounts() {
 		List<account> accounts = new ArrayList<account>();
 
@@ -56,7 +56,7 @@ public class accountController {
 	}
 	
 	
-	public account getAccoutByID(int id) {
+	public static account getAccoutByID(int id) {
 		account resultado=new account();
 		
 		Connection con = Conexion.getConexion();
@@ -108,7 +108,6 @@ public class accountController {
 			}
 		}
 	}
-	
 	public static void createAccount(account a) {
 		int result = -1;
 		ResultSet rs = null;
@@ -146,89 +145,50 @@ public class accountController {
 		}
 	}
 	
-	public static void insertAccount(account a) {
-		ResultSet rs = null;
-		PreparedStatement ps = null;
+	public int IngresaDinero(int id, int cantidad) {
+		
+		int result = 0;
 		Connection con = Conexion.getConexion();
-
-		if (con != null) {
-			try {
-				ps = con.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
-				ps.setInt(1, a.getId());
-				ps.setInt(2, a.getMoney());
-				ps.setDouble(3, a.getMiuser().getId());
-
-				ps.executeUpdate();
-
-				rs = ps.getGeneratedKeys();
-				if (rs.next()) {
-					a.setId(rs.getInt(1));
-				}
-
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-			finally {
+		if(con != null) {
+			if (accountController.getAccoutByID(id)!=null) {
+				int total = accountController.getAccoutByID(id).getMoney()+cantidad;
+				
 				try {
-					ps.close();
+					PreparedStatement q = con.prepareStatement(UPDATEMONEY);
+					q.setFloat(1, total);
+					q.setInt(2, id);
+					result = q.executeUpdate();
+					
 				} catch (SQLException e) {
-					// TODO: handle exception
+					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
+				
 			}
-
 		}
+		return result;
 	}
-	
-	public static void addMoneyInAccount(int money, account a) {
-		ResultSet rs = null;
-		PreparedStatement ps = null;
-		Connection con = Conexion.getConexion();
+	public int RetiraDinero(int id, int cantidad) {
 		
-		if (con != null) {
-			try {
-				ps = con.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
-				ps.setInt(1, a.getId());
-				ps.setInt(2, a.getMoney() + money);
-				ps.setDouble(3, a.getMiuser().getId());
-
-				ps.executeUpdate();
-
-				rs = ps.getGeneratedKeys();
-				if (rs.next()) {
-					a.setId(rs.getInt(1));
+		int result = 0;
+		Connection con = Conexion.getConexion();
+		if(con != null) {
+			if (accountController.getAccoutByID(id)!=null&&cantidad<=accountController.getAccoutByID(id).getMoney()) {
+				int total = accountController.getAccoutByID(id).getMoney()-cantidad;
+				
+				try {
+					PreparedStatement q = con.prepareStatement(UPDATEMONEY);
+					q.setFloat(1, total);
+					q.setInt(2, id);
+					result = q.executeUpdate();
+					
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 				
-			} catch (SQLException e) {
-				e.printStackTrace();
 			}
 		}
-	}
-	
-	public static void subtractMoneyInAccount(int money, account a) {
-		ResultSet rs = null;
-		PreparedStatement ps = null;
-		Connection con = Conexion.getConexion();
-		
-		if (con != null) {
-			try {
-				ps = con.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
-				ps.setInt(1, a.getId());
-				ps.setInt(2, a.getMoney() - money);
-				ps.setDouble(3, a.getMiuser().getId());
-
-				ps.executeUpdate();
-
-				rs = ps.getGeneratedKeys();
-				if (rs.next()) {
-					a.setId(rs.getInt(1));
-				}
-				
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
+		return result;
 	}
 }
