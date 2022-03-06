@@ -69,8 +69,7 @@ public class userController {
 					resultado=new user(rs.getInt("id"),
 							rs.getString("name"),
 							rs.getString("password"),
-							rs.getInt("wallet"),
-							rs.getBoolean("isOperator"));
+							rs.getInt("wallet"));
 				
 				}
 			} catch (SQLException e) {
@@ -121,7 +120,6 @@ public class userController {
 				ps.setString(2, u.getName());
 				ps.setString(3, u.getPassword());
 				ps.setInt(4, u.getWallet());
-				ps.setBoolean(5, u.isOperator());
 				ps.executeUpdate();
 
 				rs = ps.getGeneratedKeys();

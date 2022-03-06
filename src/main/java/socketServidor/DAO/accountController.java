@@ -22,6 +22,7 @@ public class accountController {
 	private static final String GETBYID = "SELECT * FROM account WHERE id=?";
 	private static final String DELETE ="DELETE FROM account WHERE id=?";
 	private final static String INSERT = "INSERT INTO account (id,money,user_id)" + "VALUES (?,?,?)";
+	private final static String UPDATEMONEY = "UPDATE cuenta SET money=? WHERE id=?";
 	public static List<account> getAllAccounts() {
 		List<account> accounts = new ArrayList<account>();
 
@@ -55,7 +56,7 @@ public class accountController {
 	}
 	
 	
-	public account getAccoutByID(int id) {
+	public static account getAccoutByID(int id) {
 		account resultado=new account();
 		
 		Connection con = Conexion.getConexion();
@@ -142,5 +143,52 @@ public class accountController {
 			}
 
 		}
+	}
+	
+	public int IngresaDinero(int id, int cantidad) {
+		
+		int result = 0;
+		Connection con = Conexion.getConexion();
+		if(con != null) {
+			if (accountController.getAccoutByID(id)!=null) {
+				int total = accountController.getAccoutByID(id).getMoney()+cantidad;
+				
+				try {
+					PreparedStatement q = con.prepareStatement(UPDATEMONEY);
+					q.setFloat(1, total);
+					q.setInt(2, id);
+					result = q.executeUpdate();
+					
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+			}
+		}
+		return result;
+	}
+	public int RetiraDinero(int id, int cantidad) {
+		
+		int result = 0;
+		Connection con = Conexion.getConexion();
+		if(con != null) {
+			if (accountController.getAccoutByID(id)!=null&&cantidad<=accountController.getAccoutByID(id).getMoney()) {
+				int total = accountController.getAccoutByID(id).getMoney()-cantidad;
+				
+				try {
+					PreparedStatement q = con.prepareStatement(UPDATEMONEY);
+					q.setFloat(1, total);
+					q.setInt(2, id);
+					result = q.executeUpdate();
+					
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+			}
+		}
+		return result;
 	}
 }
