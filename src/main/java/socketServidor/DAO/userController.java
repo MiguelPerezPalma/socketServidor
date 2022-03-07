@@ -15,12 +15,20 @@ import socketServidor.Coneection.Conexion;
 import socketServidor.models.user;
 
 
-public class userController {
+public class userController extends user{
 
 	private static final String GETALL = "SELECT * FROM user";
 	private static final String GETBYID = "SELECT * FROM user WHERE id=?";
 	private static final String DELETE ="DELETE FROM user WHERE id=?";
 	private final static String INSERT = "INSERT INTO user (id,name,password,wallet)" + "VALUES (?,?,?,?)";
+	private final static String CHECKNAMEPASS = "SELECT * FROM user WHERE (name=?) AND (password = ?)";
+	
+	public userController(String name, String pass) {
+		// TODO Auto-generated constructor stub
+	}
+	public userController() {
+		// TODO Auto-generated constructor stub
+	}
 	public static List<user> getAllUsers() {
 		List<user> users = new ArrayList<user>();
 
@@ -142,6 +150,38 @@ public class userController {
 			}
 
 		}
+	}
+	
+	public static boolean checkCredentials(String name, String pass) {
+		ResultSet rs = null;
+		PreparedStatement ps = null;
+		Connection con = Conexion.getConexion();
+		boolean result = false;
+		
+		userController a = new userController();
+		userController b = new userController(name, pass);
+		
+		if (con != null) {
+			try {
+				ps = con.prepareStatement(CHECKNAMEPASS);
+				ps.setString(1, name);
+				ps.setString(2, pass);
+				rs = ps.executeQuery();
+				
+				while(rs.next()) {
+					a.setName(rs.getString("name"));
+					a.setPassword(rs.getString("password"));
+				}
+				
+				if (a.equals(b)) {
+					result = true;
+				}
+				
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		return result;
 	}
 	
 }

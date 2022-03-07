@@ -17,7 +17,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import javax.persistence.TypedQuery;
 
-public class accountController {
+public class accountController extends account{
 	private static final String GETALL = "SELECT * FROM account";
 	private static final String GETBYID = "SELECT * FROM account WHERE id=?";
 	private static final String DELETE ="DELETE FROM account WHERE id=?";

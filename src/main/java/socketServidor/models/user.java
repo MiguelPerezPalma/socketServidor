@@ -21,6 +21,12 @@ public class user {
 		this.wallet = wallet;
 	}
 
+	public user(String name, String password) {
+		super();
+		this.name = name;
+		this.password = password;
+	}
+
 	public user() {
 		super();
 	}
