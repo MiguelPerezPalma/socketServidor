@@ -11,9 +11,13 @@ import socketServidor.models.SendServer;
 
 public class socketservice {
 
+	// El servidor crea un nuevo hilo para el cliente que se une, del cual
+	// está a la escucha hasta que se cierra su conexion.
+	// El servidor leerá las acciones del cliente (o mas bien las opciones
+	// que solicita al servidor, como iniciar sesión o ingresar dinero)
+
 	public static void readServerInputs(final Socket cliente) {
 		new Thread(() -> {
-			System.out.println("Server");
 			try {
 				while (!cliente.isClosed()) {
 
@@ -21,9 +25,9 @@ public class socketservice {
 				}
 			} catch (Exception ex) {
 				try {
+					// si ocurre algún error se cierra la conexión con el cliente
 					cliente.close();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 
@@ -33,12 +37,34 @@ public class socketservice {
 
 	}
 
+	// la información que le llega al cliente pasa por este método
+	private static void sendDataToClient(Socket client, Object objeto) {
+
+		// si existe el cliente y no se ha cerrado la conexión con él continuamos
+		if (client != null && !client.isClosed()) {
+
+			// flujo de salida
+			ObjectOutputStream objectOutputStream;
+			try {
+				// escritura y envio de los datos hacia cliente
+				objectOutputStream = new ObjectOutputStream(client.getOutputStream());
+				objectOutputStream.writeObject(objeto);
+				objectOutputStream.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	// el servidor está pendiente de las peticiones del cliente para realizar una
+	// respuesta
 	public static void leer(Socket cliente) {
 		try {
+			// flujo que obtenemos del cliente
 			ObjectInputStream dataInputStream = new ObjectInputStream(cliente.getInputStream());
 			try {
+				// pasamos los datos del flujo a un objeto
 				SendServer sendtoserver = (SendServer) dataInputStream.readObject();
-				System.out.println(sendtoserver);
 
 				userController u1;
 				userController u2;
@@ -54,14 +80,16 @@ public class socketservice {
 					u1 = (userController) sendtoserver.getObject1();
 					u2 = new userController();
 
-					if (u2.checkCredentials(u2.getName(), u2.getPassword())) {
+					// comprueba las credenciales recibidas del cliente para evitar clientes ya
+					// existentes
+					if (u2.checkCredentials(u1.getName(), u1.getPassword())) {
 						// existe el usuario
 						System.out.println("Usuario introducido correcto");
 						userController u3 = new userController();
 						u3.getUserById(u2.getId());
 
 						// se envia esta informacion
-						sendtoserver2 = new SendServer(1, u3, true);
+						sendtoserver2 = new SendServer(1, u3);
 
 						// enviar al cliente
 						sendDataToClient(cliente, sendtoserver2);
@@ -78,10 +106,12 @@ public class socketservice {
 
 				// ingresar dinero
 				case 2:
+					// obtenemos la cuenta a la que ingresar
 					ac1 = (accountController) sendtoserver.getObject1();
+					// por id, le asignamos la cantidad que se suma propuesta por el cliente a la
+					// cuenta
 					ac1.IngresaDinero(ac1.getId(), sendtoserver.getMoney());
 					System.out.println("Ingreso realizado");
-					System.out.println(ac1.toString());
 
 					// se envia esta informacion
 					sendtoserver2 = new SendServer(2, ac1);
@@ -93,10 +123,11 @@ public class socketservice {
 
 				// retirar dinero
 				case 3:
+					// obtenemos la cuenta a la que retirar
 					ac1 = (accountController) sendtoserver.getObject1();
+					// por id, le retiramos la cantidad propuesta por el cliente a la cuenta
 					ac1.RetiraDinero(ac1.getId(), sendtoserver.getMoney());
 					System.out.println("Retirada realizada");
-					System.out.println(ac1.toString());
 
 					// se envia esta informacion
 					sendtoserver2 = new SendServer(3, ac1);
@@ -108,7 +139,7 @@ public class socketservice {
 
 				// listar cuentas
 				case 4:
-					ac1 = (accountController) sendtoserver.getObject1();
+					ac1 = new accountController();
 
 					// se envia esta informacion
 					sendtoserver2 = new SendServer(4, ac1.getAllAccounts());
@@ -119,7 +150,7 @@ public class socketservice {
 
 				// listar usuarios
 				case 5:
-					u1 = (userController) sendtoserver.getObject1();
+					u1 = new userController();
 
 					// se envia esta informacion
 					sendtoserver2 = new SendServer(5, u1.getAllUsers());
@@ -130,40 +161,27 @@ public class socketservice {
 
 				// registrarse
 				case 6:
+					// nos traemos la información que nos proporciona el cliente
 					u1 = (userController) sendtoserver.getObject1();
 
+					// y se lo asignamos a un nuevo usuario
 					u2 = new userController();
-					// u2.setId(opcion);
-					u2.setName(null); //arreglar
-					u2.setPassword(null); //arreglar
+					u2.setName(u1.getName());
+					u2.setPassword(u1.getPassword());
 					u2.setWallet(0);
-					u2.createAccount(u2);
+					u2.createUser(u2);
 					System.out.println("Usuario añadido a la base de datos");
 
-					ac1 = new accountController();
-					//ac.setId(opcion);
-					ac1.setMiuser(u2);
-					ac1.setMoney(0);
-					ac1.createAccount(ac1);
+					// a su vez le asignamos una nueva cuenta por defecto
+					ac1 = (accountController) sendtoserver.getObject2();
+					ac2 = new accountController();
+					ac2.setMiuser(u2);
+					ac2.setMoney(0);
+					ac2.createAccount(ac1);
 					System.out.println("Cuenta añadida y asociada al nuevo usuario");
-					
+
 					// se envia esta informacion
 					sendtoserver2 = new SendServer(6, u2, ac1);
-
-					// enviar al cliente
-					sendDataToClient(cliente, sendtoserver2);
-					break;
-
-				// crear cuenta
-				case 7:
-					ac1 = (accountController) sendtoserver.getObject1();
-
-					ac2 = new accountController();
-					ac2.setMiuser(null); //arreglar
-					ac2.setMoney(0);
-
-					// se envia esta informacion
-					sendtoserver2 = new SendServer(7, ac2);
 
 					// enviar al cliente
 					sendDataToClient(cliente, sendtoserver2);
@@ -174,25 +192,13 @@ public class socketservice {
 
 				}
 			} catch (ClassNotFoundException e) {
+				// si ocurre algún error se cierran las conexiones con el cliente
 				e.printStackTrace();
 				cliente.close();
 				dataInputStream.close();
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-	}
-
-	private static void sendDataToClient(Socket client, Object objeto) {
-		if (client != null && !client.isClosed()) {
-			ObjectOutputStream objectOutputStream;
-			try {
-				objectOutputStream = new ObjectOutputStream(client.getOutputStream());
-				objectOutputStream.writeObject(objeto);
-				objectOutputStream.flush();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
 		}
 	}
 }
