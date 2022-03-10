@@ -20,7 +20,7 @@ public class userController extends user {
 	private static final String GETALL = "SELECT * FROM user";
 	private static final String GETBYID = "SELECT * FROM user WHERE id=?";
 	private static final String DELETE = "DELETE FROM user WHERE id=?";
-	private final static String INSERT = "INSERT INTO user (id,name,password,wallet)" + "VALUES (?,?,?,?)";
+	private final static String INSERT = "INSERT INTO user (id,name,password)" + "VALUES (?,?,?)";
 	private final static String CHECKNAMEPASS = "SELECT * FROM user WHERE (name=?) AND (password = ?)";
 
 	public userController(String name, String pass) {
@@ -53,7 +53,6 @@ public class userController extends user {
 					miuser.setId(rs.getInt("id"));
 					miuser.setName(rs.getString("name"));
 					miuser.setPassword(rs.getString("password"));
-					miuser.setWallet(rs.getInt("wallet"));
 					users.add(miuser);
 				}
 			} catch (SQLException e) {
@@ -87,8 +86,7 @@ public class userController extends user {
 				while (rs.next()) {
 
 					// obtenemos el usuario según su id
-					resultado = new user(rs.getInt("id"), rs.getString("name"), rs.getString("password"),
-							rs.getInt("wallet"));
+					resultado = new user(rs.getInt("id"), rs.getString("name"), rs.getString("password"));
 				}
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
@@ -139,7 +137,6 @@ public class userController extends user {
 				ps.setInt(1, u.getId());
 				ps.setString(2, u.getName());
 				ps.setString(3, u.getPassword());
-				ps.setInt(4, u.getWallet());
 				ps.executeUpdate();
 
 				rs = ps.getGeneratedKeys();

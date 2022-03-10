@@ -1,13 +1,17 @@
 package socketServidor.services;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 
 import socketServidor.DAO.accountController;
 import socketServidor.DAO.userController;
 import socketServidor.models.SendServer;
+import socketServidor.models.account;
+import socketServidor.models.user;
 
 public class socketservice {
 
@@ -58,147 +62,131 @@ public class socketservice {
 
 	// el servidor está pendiente de las peticiones del cliente para realizar una
 	// respuesta
-	public static void leer(Socket cliente) {
+	public static void leer(Socket cliente) throws SocketException {
+		ObjectInputStream dataInputStream = null;
 		try {
 			// flujo que obtenemos del cliente
-			ObjectInputStream dataInputStream = new ObjectInputStream(cliente.getInputStream());
-			try {
-				// pasamos los datos del flujo a un objeto
-				SendServer sendtoserver = (SendServer) dataInputStream.readObject();
+			dataInputStream = new ObjectInputStream(cliente.getInputStream());
 
-				userController u1;
-				userController u2;
-				accountController ac1;
-				accountController ac2;
-				SendServer sendtoserver2;
+			// pasamos los datos del flujo a un objeto
+			SendServer paquete = (SendServer) dataInputStream.readObject();
+			SendServer nuevoPaquete;
 
-				int opcion = sendtoserver.getOpcion();
-				switch (opcion) {
+			user userClient = (user) paquete.getObject1();
+			account accountClient = (account) paquete.getObject2();
 
-				// iniciar sesion
-				case 1:
-					u1 = (userController) sendtoserver.getObject1();
-					u2 = new userController();
+			int opcion = paquete.getOpcion();
+			switch (opcion) {
 
-					// comprueba las credenciales recibidas del cliente para evitar clientes ya
-					// existentes
-					if (u2.checkCredentials(u1.getName(), u1.getPassword())) {
-						// existe el usuario
-						System.out.println("Usuario introducido correcto");
-						userController u3 = new userController();
-						u3.getUserById(u2.getId());
-
-						// se envia esta informacion
-						sendtoserver2 = new SendServer(1, u3);
-
-						// enviar al cliente
-						sendDataToClient(cliente, sendtoserver2);
-					} else {
-						System.out.println("Usuario introducido incorrecto");
-
-						// se envia esta informacion
-						sendtoserver2 = new SendServer(1, new Object(), false);
-
-						// enviar al cliente
-						sendDataToClient(cliente, sendtoserver2);
-					}
-					break;
-
-				// ingresar dinero
-				case 2:
-					// obtenemos la cuenta a la que ingresar
-					ac1 = (accountController) sendtoserver.getObject1();
-					// por id, le asignamos la cantidad que se suma propuesta por el cliente a la
-					// cuenta
-					ac1.IngresaDinero(ac1.getId(), sendtoserver.getMoney());
-					System.out.println("Ingreso realizado");
+			// iniciar sesion
+			case 1:
+				// comprueba las credenciales recibidas del cliente para evitar clientes ya
+				// existentes
+				if (userController.checkCredentials(userClient.getName(), userClient.getPassword())) {
+					// existe el usuario
+					System.out.println("Usuario introducido correcto");
+					userClient = userController.getUserById(userClient.getId());
+					accountClient = accountController.getAccountByUserId(userClient.getId());
 
 					// se envia esta informacion
-					sendtoserver2 = new SendServer(2, ac1);
-
+					paquete = new SendServer(1, userClient, accountClient);
 					// enviar al cliente
-					sendDataToClient(cliente, sendtoserver2);
+					sendDataToClient(cliente, paquete);
 
-					break;
-
-				// retirar dinero
-				case 3:
-					// obtenemos la cuenta a la que retirar
-					ac1 = (accountController) sendtoserver.getObject1();
-					// por id, le retiramos la cantidad propuesta por el cliente a la cuenta
-					ac1.RetiraDinero(ac1.getId(), sendtoserver.getMoney());
-					System.out.println("Retirada realizada");
-
-					// se envia esta informacion
-					sendtoserver2 = new SendServer(3, ac1);
-
-					// enviar al cliente
-					sendDataToClient(cliente, sendtoserver2);
-
-					break;
-
-				// listar cuentas
-				case 4:
-					ac1 = new accountController();
-
-					// se envia esta informacion
-					sendtoserver2 = new SendServer(4, ac1.getAllAccounts());
-
-					// enviar al cliente
-					sendDataToClient(cliente, sendtoserver2);
-					break;
-
-				// listar usuarios
-				case 5:
-					u1 = new userController();
-
-					// se envia esta informacion
-					sendtoserver2 = new SendServer(5, u1.getAllUsers());
-
-					// enviar al cliente
-					sendDataToClient(cliente, sendtoserver2);
-					break;
-
-				// registrarse
-				case 6:
-					// nos traemos la información que nos proporciona el cliente
-					u1 = (userController) sendtoserver.getObject1();
-
-					// y se lo asignamos a un nuevo usuario
-					u2 = new userController();
-					u2.setName(u1.getName());
-					u2.setPassword(u1.getPassword());
-					u2.setWallet(0);
-					u2.createUser(u2);
-					System.out.println("Usuario añadido a la base de datos");
-
-					// a su vez le asignamos una nueva cuenta por defecto
-					ac1 = (accountController) sendtoserver.getObject2();
-					ac2 = new accountController();
-					ac2.setMiuser(u2);
-					ac2.setMoney(0);
-					ac2.createAccount(ac1);
-					System.out.println("Cuenta añadida y asociada al nuevo usuario");
-
-					// se envia esta informacion
-					sendtoserver2 = new SendServer(6, u2, ac1);
-
-					// enviar al cliente
-					sendDataToClient(cliente, sendtoserver2);
-					break;
-
-				default:
-					break;
-
+					System.out.println("Paquete enviado con éxito");
 				}
-			} catch (ClassNotFoundException e) {
-				// si ocurre algún error se cierran las conexiones con el cliente
-				e.printStackTrace();
-				cliente.close();
-				dataInputStream.close();
+				break;
+
+			// ingresar dinero
+			case 2:
+				// obtenemos la cuenta a la que ingresar
+				accountClient = accountController.actualizaDinero(accountClient, true, paquete.getMoney());
+				System.out.println("Ingreso realizado");
+
+				// se envia esta informacion
+				nuevoPaquete = new SendServer(2, accountClient);
+
+				// enviar al cliente
+				sendDataToClient(cliente, nuevoPaquete);
+
+				break;
+
+//			// retirar dinero
+			case 3:
+				// obtenemos la cuenta a la que retirar
+				accountClient = accountController.actualizaDinero(accountClient, false, paquete.getMoney());
+				System.out.println("Retirada realizada");
+
+				// se envia esta informacion
+				nuevoPaquete = new SendServer(2, accountClient);
+
+				// enviar al cliente
+				sendDataToClient(cliente, nuevoPaquete);
+
+				break;
+//
+//			// listar cuentas
+//			case 4:
+//				ac1 = new accountController();
+//
+//				// se envia esta informacion
+//				sendtoserver2 = new SendServer(4, ac1.getAllAccounts());
+//
+//				// enviar al cliente
+//				sendDataToClient(cliente, sendtoserver2);
+//				break;
+//
+//			// listar usuarios
+//			case 5:
+//				u1 = new userController();
+//
+//				// se envia esta informacion
+//				sendtoserver2 = new SendServer(5, u1.getAllUsers());
+//
+//				// enviar al cliente
+//				sendDataToClient(cliente, sendtoserver2);
+//				break;
+//
+//			// registrarse
+//			case 6:
+//				// nos traemos la información que nos proporciona el cliente
+//				u1 = (userController) paquete.getObject1();
+//
+//				// y se lo asignamos a un nuevo usuario
+//				u2 = new userController();
+//				u2.setName(u1.getName());
+//				u2.setPassword(u1.getPassword());
+//				u2.setWallet(0);
+//				u2.createUser(u2);
+//				System.out.println("Usuario añadido a la base de datos");
+//
+//				// a su vez le asignamos una nueva cuenta por defecto
+//				ac1 = (accountController) paquete.getObject2();
+//				ac2 = new accountController();
+//				ac2.setMiuser(u2);
+//				ac2.setMoney(0);
+//				ac2.createAccount(ac1);
+//				System.out.println("Cuenta añadida y asociada al nuevo usuario");
+//
+//				// se envia esta informacion
+//				sendtoserver2 = new SendServer(6, u2, ac1);
+//
+//				// enviar al cliente
+//				sendDataToClient(cliente, sendtoserver2);
+//				break;
+
+			default:
+				break;
+
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (IOException | ClassNotFoundException e) {
+			if (e instanceof EOFException) {
+				throw new SocketException(e.getMessage());
+			} else if (e instanceof ClassNotFoundException) {
+				throw new SocketException("Clase no encontrada");
+			} else {
+				e.printStackTrace();
+			}
 		}
 	}
 }

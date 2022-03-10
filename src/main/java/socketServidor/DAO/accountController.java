@@ -25,6 +25,7 @@ public class accountController extends account {
 	private static final String DELETE = "DELETE FROM account WHERE id=?";
 	private final static String INSERT = "INSERT INTO account (id,money,user_id)" + "VALUES (?,?,?)";
 	private final static String UPDATEMONEY = "UPDATE cuenta SET money=? WHERE id=?";
+	private final static String GETBYIDUSER = "SELECT * FROM account WHERE user_id=?";
 
 	// lista todas las cuentas
 	public static List<account> getAllAccounts() {
@@ -159,27 +160,42 @@ public class accountController extends account {
 		}
 	}
 
-	public int IngresaDinero(int id, int cantidad) {
+	public static synchronized account actualizaDinero(account cuenta, boolean opcion, int cantidad) {
 
-		int result = 0;
-
+		account result = new account();
 		Connection con = Conexion.getConexion();
+
 		if (con != null) {
 
-			// comprueba que exista la cuenta, y hace una suma de la cantidad con el dinero
-			// ya existente de la cuenta
-			if (accountController.getAccoutByID(id) != null) {
-				int total = accountController.getAccoutByID(id).getMoney() + cantidad;
+			if (opcion) {
+				int addMoney = accountController.getAccoutByID(cuenta.getId()).getMoney() + cantidad;
 
-				// consulta en la bd para actualizar la cantidad de la cuenta
 				try {
 					PreparedStatement q = con.prepareStatement(UPDATEMONEY);
-					q.setFloat(1, total);
-					q.setInt(2, id);
-					result = q.executeUpdate();
+					q.setInt(1, addMoney);
+					q.setInt(2, cuenta.getId());
+					q.executeUpdate();
+					result = cuenta;
+					result.setMoney(addMoney);
+					q.close();
 
 				} catch (SQLException e) {
-					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+			} else {
+				int extractMoney = accountController.getAccoutByID(cuenta.getId()).getMoney() - cantidad;
+
+				try {
+					PreparedStatement q = con.prepareStatement(UPDATEMONEY);
+					q.setInt(1, extractMoney);
+					q.setInt(2, cuenta.getId());
+					q.executeUpdate();
+					result = cuenta;
+					result.setMoney(extractMoney);
+					q.close();
+
+				} catch (SQLException e) {
 					e.printStackTrace();
 				}
 
@@ -188,32 +204,24 @@ public class accountController extends account {
 		return result;
 	}
 
-	// comprueba que exista la cuenta, y hace una resta de la cantidad con el dinero
-	// ya existente de la cuenta
-	public int RetiraDinero(int id, int cantidad) {
-
-		int result = 0;
+	public synchronized static account getAccountByUserId(int user_id) {
 		Connection con = Conexion.getConexion();
+		account result = new account();
+
 		if (con != null) {
-
-			// comprobaciones de que existe la cuenta y de que la cuenta no se quede en
-			// números rojos
-			if (accountController.getAccoutByID(id) != null
-					&& cantidad <= accountController.getAccoutByID(id).getMoney()) {
-				int total = accountController.getAccoutByID(id).getMoney() - cantidad;
-
-				// consulta en la bd para actualizar la cantidad de la cuenta
-				try {
-					PreparedStatement q = con.prepareStatement(UPDATEMONEY);
-					q.setFloat(1, total);
-					q.setInt(2, id);
-					result = q.executeUpdate();
-
-				} catch (SQLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+			try {
+				PreparedStatement q = con.prepareStatement(GETBYIDUSER);
+				q.setInt(1, user_id);
+				ResultSet rs = q.executeQuery();
+				while (rs.next()) {
+					result.setId(rs.getInt("user_id"));
+					result.setMoney(rs.getInt("wallet"));
+					result.setMiuser(userController.getUserById(rs.getInt(user_id)));
 				}
-
+				rs.close();
+				q.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
 		}
 		return result;
