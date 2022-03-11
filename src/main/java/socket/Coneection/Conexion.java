@@ -1,4 +1,4 @@
-package socketServidor.Coneection;
+package socket.Coneection;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -24,7 +24,7 @@ public class Conexion {
 	}
 	
 	/**
-	 * Cierra los recursos de una conexión abierta
+	 * Cierra los recursos de una conexiï¿½n abierta
 	 */
 	public static void cerrar() {
 		if (con != null) {

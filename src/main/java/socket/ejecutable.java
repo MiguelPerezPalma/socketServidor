@@ -1,11 +1,11 @@
-package socketServidor;
+package socket;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import socketServidor.Coneection.Conexion;
-import socketServidor.services.socketservice;
+import socket.Coneection.Conexion;
+import socket.services.socketservice;
 
 public class ejecutable {
 

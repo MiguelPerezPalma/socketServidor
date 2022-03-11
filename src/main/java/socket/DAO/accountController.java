@@ -1,8 +1,8 @@
-package socketServidor.DAO;
+package socket.DAO;
 
-import socketServidor.Coneection.Conexion;
-import socketServidor.models.account;
-import socketServidor.models.user;
+import socket.Coneection.Conexion;
+import socket.models.account;
+import socket.models.user;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,11 +11,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
-import javax.persistence.TypedQuery;
 
 public class accountController extends account {
 
@@ -28,14 +23,14 @@ public class accountController extends account {
 	private final static String GETBYIDUSER = "SELECT * FROM account WHERE user_id=?";
 
 	// lista todas las cuentas
-	public static List<account> getAllAccounts() {
+	public synchronized static List<account> getAllAccounts() {
 
-		// lista donde se almacenará todas las cuentas
+		// lista donde se almacenarï¿½ todas las cuentas
 		List<account> accounts = new ArrayList<account>();
 
 		Connection con = Conexion.getConexion();
 
-		// si se realiza la conexión con la bd, procede
+		// si se realiza la conexiï¿½n con la bd, procede
 		if (con != null) {
 			PreparedStatement ps = null;
 			ResultSet rs = null;
@@ -66,8 +61,8 @@ public class accountController extends account {
 		return accounts;
 	}
 
-	// se obtiene la cuenta según su id
-	public static account getAccoutByID(int id) {
+	// se obtiene la cuenta segï¿½n su id
+	public synchronized static account getAccoutByID(int id) {
 		account resultado = new account();
 
 		Connection con = Conexion.getConexion();
@@ -83,7 +78,7 @@ public class accountController extends account {
 					userController x = new userController();
 					user xs = x.getUserById(rs.getInt("Id_Genero"));
 
-					// obtenemos el usuario según id
+					// obtenemos el usuario segï¿½n id
 					resultado = new account(rs.getInt("Id"), rs.getInt("money"), xs);
 
 				}
@@ -102,9 +97,9 @@ public class accountController extends account {
 		return resultado;
 	}
 
-	// obtiene el id de la cuenta pasada por parámetro y ejecuta la consulta DELETE
-	// que borra la cuenta en cuestión
-	public static void deleteAccount(account a) {
+	// obtiene el id de la cuenta pasada por parï¿½metro y ejecuta la consulta DELETE
+	// que borra la cuenta en cuestiï¿½n
+	public synchronized static void deleteAccount(account a) {
 		int rs = 0;
 		Connection con = Conexion.getConexion();
 
@@ -121,9 +116,9 @@ public class accountController extends account {
 		}
 	}
 
-	// introduce los datos de la cuenta pasada por parámetro ejecutando la consulta
+	// introduce los datos de la cuenta pasada por parï¿½metro ejecutando la consulta
 	// INSERT
-	public static void createAccount(account a) {
+	public synchronized static void createAccount(account a) {
 		int result = -1;
 		ResultSet rs = null;
 		PreparedStatement ps = null;
@@ -160,7 +155,7 @@ public class accountController extends account {
 		}
 	}
 
-	public static synchronized account actualizaDinero(account cuenta, boolean opcion, int cantidad) {
+	public synchronized static account actualizaDinero(account cuenta, boolean opcion, int cantidad) {
 
 		account result = new account();
 		Connection con = Conexion.getConexion();

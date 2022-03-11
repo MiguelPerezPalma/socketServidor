@@ -1,8 +1,9 @@
-package socketServidor.models;
+package socket.models;
 
-import java.util.List;
+import java.io.Serializable;
 
-public class account {
+public class account implements Serializable {
+	private static final long serialVersionUID = 1L;
 	protected int id;
 	protected int money;
 	protected user miuser;

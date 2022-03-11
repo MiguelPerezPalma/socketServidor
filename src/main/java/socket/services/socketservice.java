@@ -1,4 +1,4 @@
-package socketServidor.services;
+package socket.services;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -7,18 +7,18 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 
-import socketServidor.DAO.accountController;
-import socketServidor.DAO.userController;
-import socketServidor.models.SendServer;
-import socketServidor.models.account;
-import socketServidor.models.user;
+import socket.DAO.accountController;
+import socket.DAO.userController;
+import socket.models.Send;
+import socket.models.account;
+import socket.models.user;
 
 public class socketservice {
 
 	// El servidor crea un nuevo hilo para el cliente que se une, del cual
-	// está a la escucha hasta que se cierra su conexion.
-	// El servidor leerá las acciones del cliente (o mas bien las opciones
-	// que solicita al servidor, como iniciar sesión o ingresar dinero)
+	// estï¿½ a la escucha hasta que se cierra su conexion.
+	// El servidor leerï¿½ las acciones del cliente (o mas bien las opciones
+	// que solicita al servidor, como iniciar sesiï¿½n o ingresar dinero)
 
 	public static void readServerInputs(final Socket cliente) {
 		new Thread(() -> {
@@ -29,7 +29,7 @@ public class socketservice {
 				}
 			} catch (Exception ex) {
 				try {
-					// si ocurre algún error se cierra la conexión con el cliente
+					// si ocurre algï¿½n error se cierra la conexiï¿½n con el cliente
 					cliente.close();
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -41,10 +41,10 @@ public class socketservice {
 
 	}
 
-	// la información que le llega al cliente pasa por este método
-	private static void sendDataToClient(Socket client, Object objeto) {
+	// la informaciï¿½n que le llega al cliente pasa por este mï¿½todo
+	private static void sendDataToClient(Socket client, Send objeto) {
 
-		// si existe el cliente y no se ha cerrado la conexión con él continuamos
+		// si existe el cliente y no se ha cerrado la conexiï¿½n con ï¿½l continuamos
 		if (client != null && !client.isClosed()) {
 
 			// flujo de salida
@@ -53,29 +53,34 @@ public class socketservice {
 				// escritura y envio de los datos hacia cliente
 				objectOutputStream = new ObjectOutputStream(client.getOutputStream());
 				objectOutputStream.writeObject(objeto);
-				objectOutputStream.flush();
+				//objectOutputStream.flush();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
 	}
 
-	// el servidor está pendiente de las peticiones del cliente para realizar una
+	// el servidor estï¿½ pendiente de las peticiones del cliente para realizar una
 	// respuesta
 	public static void leer(Socket cliente) throws SocketException {
 		ObjectInputStream dataInputStream = null;
 		try {
 			// flujo que obtenemos del cliente
 			dataInputStream = new ObjectInputStream(cliente.getInputStream());
-
 			// pasamos los datos del flujo a un objeto
-			SendServer paquete = (SendServer) dataInputStream.readObject();
-			SendServer nuevoPaquete;
+//			Object ob = dataInputStream.readObject();
+//			Send paquete = (Send) ob;
+			Send paquete = (Send) dataInputStream.readObject();
+			System.out.println("paquete: " + paquete.getObj1().getName());
+			System.out.println("opcion: " + paquete.getSelect());
+			
+			Send nuevoPaquete;
 
-			user userClient = (user) paquete.getObject1();
-			account accountClient = (account) paquete.getObject2();
+			user userClient = paquete.getObj1();
+			System.out.println("userclient: " + userClient.toString());
+			account accountClient = paquete.getObj2();
 
-			int opcion = paquete.getOpcion();
+			int opcion = paquete.getSelect();
 			switch (opcion) {
 
 			// iniciar sesion
@@ -89,7 +94,7 @@ public class socketservice {
 					accountClient = accountController.getAccountByUserId(userClient.getId());
 
 					// se envia esta informacion
-					paquete = new SendServer(1, userClient, accountClient);
+					paquete = new Send(1, userClient, accountClient);
 					// enviar al cliente
 					sendDataToClient(cliente, paquete);
 
@@ -100,11 +105,11 @@ public class socketservice {
 			// ingresar dinero
 			case 2:
 				// obtenemos la cuenta a la que ingresar
-				accountClient = accountController.actualizaDinero(accountClient, true, paquete.getMoney());
+				accountClient = accountController.actualizaDinero(accountClient, true, paquete.getObj2().getMoney());
 				System.out.println("Ingreso realizado");
 
 				// se envia esta informacion
-				nuevoPaquete = new SendServer(2, accountClient);
+				nuevoPaquete = new Send(2,null, accountClient);
 
 				// enviar al cliente
 				sendDataToClient(cliente, nuevoPaquete);
@@ -114,11 +119,11 @@ public class socketservice {
 //			// retirar dinero
 			case 3:
 				// obtenemos la cuenta a la que retirar
-				accountClient = accountController.actualizaDinero(accountClient, false, paquete.getMoney());
+				accountClient = accountController.actualizaDinero(accountClient, false, paquete.getObj2().getMoney());
 				System.out.println("Retirada realizada");
 
 				// se envia esta informacion
-				nuevoPaquete = new SendServer(2, accountClient);
+				nuevoPaquete = new Send(2,null, accountClient);
 
 				// enviar al cliente
 				sendDataToClient(cliente, nuevoPaquete);
@@ -149,7 +154,7 @@ public class socketservice {
 //
 //			// registrarse
 //			case 6:
-//				// nos traemos la información que nos proporciona el cliente
+//				// nos traemos la informaciï¿½n que nos proporciona el cliente
 //				u1 = (userController) paquete.getObject1();
 //
 //				// y se lo asignamos a un nuevo usuario
@@ -158,7 +163,7 @@ public class socketservice {
 //				u2.setPassword(u1.getPassword());
 //				u2.setWallet(0);
 //				u2.createUser(u2);
-//				System.out.println("Usuario añadido a la base de datos");
+//				System.out.println("Usuario aï¿½adido a la base de datos");
 //
 //				// a su vez le asignamos una nueva cuenta por defecto
 //				ac1 = (accountController) paquete.getObject2();
@@ -166,7 +171,7 @@ public class socketservice {
 //				ac2.setMiuser(u2);
 //				ac2.setMoney(0);
 //				ac2.createAccount(ac1);
-//				System.out.println("Cuenta añadida y asociada al nuevo usuario");
+//				System.out.println("Cuenta aï¿½adida y asociada al nuevo usuario");
 //
 //				// se envia esta informacion
 //				sendtoserver2 = new SendServer(6, u2, ac1);
