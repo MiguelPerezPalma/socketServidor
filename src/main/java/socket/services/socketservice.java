@@ -65,7 +65,7 @@ public class socketservice {
 	public static void leer(Socket cliente) throws SocketException {
 		ObjectInputStream dataInputStream = null;
 		try {
-			// flujo que obtenemos del cliente
+			// flujo de entrada que obtenemos del cliente
 			dataInputStream = new ObjectInputStream(cliente.getInputStream());
 			// pasamos los datos del flujo a un objeto
 			Send paquete = (Send) dataInputStream.readObject();
@@ -99,26 +99,26 @@ public class socketservice {
 
 			// ingresar dinero
 			case 2:
-				// obtenemos la cuenta a la que ingresar
+				// actualizamos la cuenta a la que ingresar
 				accountClient = accountController.actualizaDinero(accountClient, true, paquete.getObj2().getMoney());
 
-				// se envia esta informacion
+				// se crea el paquete
 				nuevoPaquete = new Send(2, null, accountClient);
 
-				// enviar al cliente
+				// enviar el paquete al cliente
 				sendDataToClient(cliente, nuevoPaquete);
 
 				break;
 
 			// retirar dinero
 			case 3:
-				// obtenemos la cuenta a la que retirar
+				// actualizamos la cuenta a la que retirar
 				accountClient = accountController.actualizaDinero(accountClient, false, paquete.getObj2().getMoney());
 
-				// se envia esta informacion
+				// se crea el paquete
 				nuevoPaquete = new Send(2, null, accountClient);
 
-				// enviar al cliente
+				// enviar el paquete al cliente
 				sendDataToClient(cliente, nuevoPaquete);
 
 				break;
