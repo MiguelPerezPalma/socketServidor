@@ -18,7 +18,7 @@ public class socketservice {
 	// El servidor crea un nuevo hilo para el cliente que se une, del cual
 	// estï¿½ a la escucha hasta que se cierra su conexion.
 	// El servidor leerï¿½ las acciones del cliente (o mas bien las opciones
-	// que solicita al servidor, como iniciar sesiï¿½n o ingresar dinero)
+	// que solicita al servidor, como iniciar sesión o ingresar dinero)
 
 	public static void readServerInputs(final Socket cliente) {
 		new Thread(() -> {
@@ -41,10 +41,10 @@ public class socketservice {
 
 	}
 
-	// la informaciï¿½n que le llega al cliente pasa por este mï¿½todo
+	// la información que le llega al cliente pasa por este método
 	private static void sendDataToClient(Socket client, Send objeto) {
 
-		// si existe el cliente y no se ha cerrado la conexiï¿½n con ï¿½l continuamos
+		// si existe el cliente y no se ha cerrado la conexión con él, continuamos
 		if (client != null && !client.isClosed()) {
 
 			// flujo de salida
@@ -53,14 +53,14 @@ public class socketservice {
 				// escritura y envio de los datos hacia cliente
 				objectOutputStream = new ObjectOutputStream(client.getOutputStream());
 				objectOutputStream.writeObject(objeto);
-				//objectOutputStream.flush();
+				// objectOutputStream.flush();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
 	}
 
-	// el servidor estï¿½ pendiente de las peticiones del cliente para realizar una
+	// el servidor está pendiente de las peticiones del cliente para realizar una
 	// respuesta
 	public static void leer(Socket cliente) throws SocketException {
 		ObjectInputStream dataInputStream = null;
@@ -68,16 +68,10 @@ public class socketservice {
 			// flujo que obtenemos del cliente
 			dataInputStream = new ObjectInputStream(cliente.getInputStream());
 			// pasamos los datos del flujo a un objeto
-//			Object ob = dataInputStream.readObject();
-//			Send paquete = (Send) ob;
 			Send paquete = (Send) dataInputStream.readObject();
-			System.out.println("paquete: " + paquete.getObj1().getName());
-			System.out.println("opcion: " + paquete.getSelect());
-			
 			Send nuevoPaquete;
 
 			user userClient = paquete.getObj1();
-			System.out.println("userclient: " + userClient.toString());
 			account accountClient = paquete.getObj2();
 
 			int opcion = paquete.getSelect();
@@ -87,10 +81,8 @@ public class socketservice {
 			case 1:
 				// comprueba las credenciales recibidas del cliente para evitar clientes ya
 				// existentes
-				if (userController.checkCredentials(userClient.getName(), userClient.getPassword())) {
+				if (userController.checkCredentials(userClient)) {
 					// existe el usuario
-					System.out.println("Usuario introducido correcto");
-					userClient = userController.getUserById(userClient.getId());
 					accountClient = accountController.getAccountByUserId(userClient.getId());
 
 					// se envia esta informacion
@@ -98,7 +90,10 @@ public class socketservice {
 					// enviar al cliente
 					sendDataToClient(cliente, paquete);
 
-					System.out.println("Paquete enviado con éxito");
+				} else {
+					userClient.setId(-1);
+					paquete = new Send(1, userClient);
+					sendDataToClient(cliente, paquete);
 				}
 				break;
 
@@ -106,91 +101,50 @@ public class socketservice {
 			case 2:
 				// obtenemos la cuenta a la que ingresar
 				accountClient = accountController.actualizaDinero(accountClient, true, paquete.getObj2().getMoney());
-				System.out.println("Ingreso realizado");
 
 				// se envia esta informacion
-				nuevoPaquete = new Send(2,null, accountClient);
+				nuevoPaquete = new Send(2, null, accountClient);
 
 				// enviar al cliente
 				sendDataToClient(cliente, nuevoPaquete);
 
 				break;
 
-//			// retirar dinero
+			// retirar dinero
 			case 3:
 				// obtenemos la cuenta a la que retirar
 				accountClient = accountController.actualizaDinero(accountClient, false, paquete.getObj2().getMoney());
-				System.out.println("Retirada realizada");
 
 				// se envia esta informacion
-				nuevoPaquete = new Send(2,null, accountClient);
+				nuevoPaquete = new Send(2, null, accountClient);
 
 				// enviar al cliente
 				sendDataToClient(cliente, nuevoPaquete);
 
 				break;
-//
-//			// listar cuentas
-//			case 4:
-//				ac1 = new accountController();
-//
-//				// se envia esta informacion
-//				sendtoserver2 = new SendServer(4, ac1.getAllAccounts());
-//
-//				// enviar al cliente
-//				sendDataToClient(cliente, sendtoserver2);
-//				break;
-//
-//			// listar usuarios
-//			case 5:
-//				u1 = new userController();
-//
-//				// se envia esta informacion
-//				sendtoserver2 = new SendServer(5, u1.getAllUsers());
-//
-//				// enviar al cliente
-//				sendDataToClient(cliente, sendtoserver2);
-//				break;
-//
-//			// registrarse
-//			case 6:
-//				// nos traemos la informaciï¿½n que nos proporciona el cliente
-//				u1 = (userController) paquete.getObject1();
-//
-//				// y se lo asignamos a un nuevo usuario
-//				u2 = new userController();
-//				u2.setName(u1.getName());
-//				u2.setPassword(u1.getPassword());
-//				u2.setWallet(0);
-//				u2.createUser(u2);
-//				System.out.println("Usuario aï¿½adido a la base de datos");
-//
-//				// a su vez le asignamos una nueva cuenta por defecto
-//				ac1 = (accountController) paquete.getObject2();
-//				ac2 = new accountController();
-//				ac2.setMiuser(u2);
-//				ac2.setMoney(0);
-//				ac2.createAccount(ac1);
-//				System.out.println("Cuenta aï¿½adida y asociada al nuevo usuario");
-//
-//				// se envia esta informacion
-//				sendtoserver2 = new SendServer(6, u2, ac1);
-//
-//				// enviar al cliente
-//				sendDataToClient(cliente, sendtoserver2);
-//				break;
+
+			// registrarse
+			case 4:
+				userController.createUser(userClient);
+				accountClient.setMiuser(userClient);
+				accountController.createAccount(accountClient);
+
+				paquete = new Send(4, userClient, accountClient);
+				sendDataToClient(cliente, paquete);
+				break;
 
 			default:
 				break;
-
 			}
+
 		} catch (IOException | ClassNotFoundException e) {
 			if (e instanceof EOFException) {
 				throw new SocketException(e.getMessage());
 			} else if (e instanceof ClassNotFoundException) {
 				throw new SocketException("Clase no encontrada");
 			} else {
-				e.printStackTrace();
+				System.out.println("Se ha desconectado un cliente");
+				throw new SocketException("El cliente se ha desconectado");
 			}
 		}
 	}

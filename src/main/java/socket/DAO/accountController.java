@@ -18,8 +18,8 @@ public class accountController extends account {
 	private static final String GETALL = "SELECT * FROM account";
 	private static final String GETBYID = "SELECT * FROM account WHERE id=?";
 	private static final String DELETE = "DELETE FROM account WHERE id=?";
-	private final static String INSERT = "INSERT INTO account (id,money,user_id)" + "VALUES (?,?,?)";
-	private final static String UPDATEMONEY = "UPDATE cuenta SET money=? WHERE id=?";
+	private final static String INSERT = "INSERT INTO account (money,user_id) VALUES (?,?)";
+	private final static String UPDATEMONEY = "UPDATE account SET money=? WHERE id=?";
 	private final static String GETBYIDUSER = "SELECT * FROM account WHERE user_id=?";
 
 	// lista todas las cuentas
@@ -75,8 +75,7 @@ public class accountController extends account {
 				rs = ps.executeQuery();
 				// comprobamos el id con los de la bd
 				while (rs.next()) {
-					userController x = new userController();
-					user xs = x.getUserById(rs.getInt("Id_Genero"));
+					user xs = userController.getUserById(rs.getInt("user_id"));
 
 					// obtenemos el usuario seg�n id
 					resultado = new account(rs.getInt("Id"), rs.getInt("money"), xs);
@@ -97,7 +96,8 @@ public class accountController extends account {
 		return resultado;
 	}
 
-	// obtiene el id de la cuenta pasada por par�metro y ejecuta la consulta DELETE
+	// obtiene el id de la cuenta pasada por par�metro y ejecuta la consulta
+	// DELETE
 	// que borra la cuenta en cuesti�n
 	public synchronized static void deleteAccount(account a) {
 		int rs = 0;
@@ -116,7 +116,8 @@ public class accountController extends account {
 		}
 	}
 
-	// introduce los datos de la cuenta pasada por par�metro ejecutando la consulta
+	// introduce los datos de la cuenta pasada por par�metro ejecutando la
+	// consulta
 	// INSERT
 	public synchronized static void createAccount(account a) {
 		int result = -1;
@@ -127,12 +128,9 @@ public class accountController extends account {
 		if (con != null) {
 			try {
 				ps = con.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
-				ps.setInt(1, a.getId());
-				ps.setInt(2, a.getMoney());
-				ps.setDouble(3, a.getMiuser().getId());
-
+				ps.setInt(1, a.getMoney());
+				ps.setDouble(2, a.getMiuser().getId());
 				ps.executeUpdate();
-
 				rs = ps.getGeneratedKeys();
 				if (rs.next()) {
 					a.setId(rs.getInt(1));
@@ -162,38 +160,17 @@ public class accountController extends account {
 
 		if (con != null) {
 
-			if (opcion) {
-				int addMoney = accountController.getAccoutByID(cuenta.getId()).getMoney() + cantidad;
+			try {
+				PreparedStatement q = con.prepareStatement(UPDATEMONEY);
+				q.setInt(1, cantidad);
+				q.setInt(2, cuenta.getId());
+				q.executeUpdate();
+				result = cuenta;
+				result.setMoney(cantidad);
+				q.close();
 
-				try {
-					PreparedStatement q = con.prepareStatement(UPDATEMONEY);
-					q.setInt(1, addMoney);
-					q.setInt(2, cuenta.getId());
-					q.executeUpdate();
-					result = cuenta;
-					result.setMoney(addMoney);
-					q.close();
-
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-
-			} else {
-				int extractMoney = accountController.getAccoutByID(cuenta.getId()).getMoney() - cantidad;
-
-				try {
-					PreparedStatement q = con.prepareStatement(UPDATEMONEY);
-					q.setInt(1, extractMoney);
-					q.setInt(2, cuenta.getId());
-					q.executeUpdate();
-					result = cuenta;
-					result.setMoney(extractMoney);
-					q.close();
-
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
 		}
 		return result;
@@ -209,9 +186,9 @@ public class accountController extends account {
 				q.setInt(1, user_id);
 				ResultSet rs = q.executeQuery();
 				while (rs.next()) {
-					result.setId(rs.getInt("user_id"));
-					result.setMoney(rs.getInt("wallet"));
-					result.setMiuser(userController.getUserById(rs.getInt(user_id)));
+					result.setId(rs.getInt("id"));
+					result.setMoney(rs.getInt("money"));
+					result.setMiuser(userController.getUserById(rs.getInt("user_id")));
 				}
 				rs.close();
 				q.close();

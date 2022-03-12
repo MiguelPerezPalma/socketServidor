@@ -16,6 +16,7 @@ public class userController extends user {
 	// consultas necesarias para manipular la bd
 	private static final String GETALL = "SELECT * FROM user";
 	private static final String GETBYID = "SELECT * FROM user WHERE id=?";
+	private static final String GETBYNAME = "SELECT * FROM user WHERE name=?";
 	private static final String DELETE = "DELETE FROM user WHERE id=?";
 	private final static String INSERT = "INSERT INTO user (id,name,password)" + "VALUES (?,?,?)";
 	private final static String CHECKNAMEPASS = "SELECT * FROM user WHERE (name=?) AND (password = ?)";
@@ -31,12 +32,12 @@ public class userController extends user {
 	// lista todos los usuarios
 	public synchronized static List<user> getAllUsers() {
 
-		// lista donde se almacenarï¿½ todos los usuarios
+		// lista donde se almacenaría todos los usuarios
 		List<user> users = new ArrayList<user>();
 
 		Connection con = Conexion.getConexion();
 
-		// si se realiza la conexiï¿½n con la bd, procede
+		// si se realiza la conexión con la bd, procede
 		if (con != null) {
 			PreparedStatement ps = null;
 			ResultSet rs = null;
@@ -100,8 +101,39 @@ public class userController extends user {
 		return resultado;
 	}
 
+	public synchronized static user getUserByName(String name) {
+		user resultado = new user();
+
+		Connection con = Conexion.getConexion();
+		if (con != null) {
+			PreparedStatement ps = null;
+			ResultSet rs = null;
+			try {
+				ps = con.prepareStatement(GETBYNAME);
+				ps.setString(1, name);
+				rs = ps.executeQuery();
+				// comprobamos el id con los de la bd
+				while (rs.next()) {
+					// obtenemos el usuario según su id
+					resultado = new user(rs.getInt("id"), rs.getString("name"), rs.getString("password"));
+				}
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} finally {
+				try {
+					ps.close();
+					rs.close();
+				} catch (SQLException e) {
+					// TODO: handle exception
+				}
+			}
+		}
+		return resultado;
+	}
+
 	// obtiene el id del usuario pasado por parï¿½metro y ejecuta la consulta DELETE
-	// que borra el usuario en cuestiï¿½n
+	// que borra el usuario en cuestión
 	public synchronized static void deleteUser(user u) {
 		int rs = 0;
 		Connection con = Conexion.getConexion();
@@ -120,7 +152,7 @@ public class userController extends user {
 		}
 	}
 
-	// introduce los datos del usuario pasado por parï¿½metro ejecutando la consulta
+	// introduce los datos del usuario pasado por parámetro ejecutando la consulta
 	// INSERT
 	public synchronized static void createUser(user u) {
 		int result = -1;
@@ -158,41 +190,34 @@ public class userController extends user {
 		}
 	}
 
-	// comprueba que los parï¿½metros facilitados concuerden con un usuario de la bd
-	public synchronized static boolean checkCredentials(String name, String pass) {
+	// comprueba que los parámetros facilitados concuerden con un usuario de la bd
+	public synchronized static boolean checkCredentials(user usuario) {
 		Connection con = Conexion.getConexion();
 		boolean result = false;
 
-		userController a = new userController();
-		userController b = new userController();
-		b.setName(name);
-		b.setPassword(pass);
-
-		System.out.println("argumento name: " + name + " - argumento pass: " + pass);
 		if (con != null) {
 			try {
 				PreparedStatement ps = con.prepareStatement(CHECKNAMEPASS);
-				ps.setString(1, name);
-				ps.setString(2, pass);
+				ps.setString(1, usuario.getName());
+				ps.setString(2, usuario.getPassword());
 				ResultSet rs = ps.executeQuery();
 
+				String name = "", pass = "";
+				int id = -1;
 				// comparaciones de cada usuario de la bd con los datos facilitados
 				while (rs.next()) {
-					System.out.println(
-							"usercontroller name: " + rs.getString("name") + " - pass: " + rs.getString("password"));
-					a.setName(rs.getString("name"));
-					a.setPassword(rs.getString("password"));
+					id = rs.getInt("id");
+					name = rs.getString("name");
+					pass = rs.getString("password");
 				}
 
 				// si se da el caso de que un usuario concuerda con los datos, se devuelve true
-				if (a.getName().equals(b.getName()) && a.getPassword().equals(b.getPassword())) {
+				if (usuario.getName().equals(name) && usuario.getPassword().equals(pass)) {
 					result = true;
+					usuario.setId(id);
 				}
-				System.out.println(a.toString());
-				System.out.println(b.toString());
-				System.out.println("Resultado: " + result);
-
 				ps.close();
+				rs.close();
 
 			} catch (SQLException e) {
 				e.printStackTrace();
